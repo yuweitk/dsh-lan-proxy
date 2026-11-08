@@ -40,6 +40,25 @@ web 服务器（默认 `127.0.0.1:3080`），并重写 `Host` / `Origin` / **同
 
 `Origin` 的处理与上游一致：存在即改写为 `http://<targetAuthority>`。
 
+## 兼容的 DSH 版本（重要）
+
+上游 0.2.10 把 DSH 侧 peer 写成了**精确版本**（`@deepseek-ai/dsh-host-webserver: 0.2.1-rc.2` 等），
+而 DSH 启动时会用 `semver.satisfies(runtime, range, { includePrerelease: true })` 逐个比对
+`@deepseek-ai/dsh*` peer 与运行时版本。结果就是：在 **DSH 0.2.2-rc.1**（以及任何不是
+0.2.1-rc.2 的版本）上，插件会被判为「版本不兼容」，市场/设置页提示需要「允许不兼容版本」
+（`dsh plugin allow-version`），或干脆拒绝激活。
+
+本 fork 把范围放宽为：
+
+| peer | 上游 0.2.10 | 本 fork |
+| --- | --- | --- |
+| `@deepseek-ai/dsh-*`（7 个） | `0.2.1-rc.2`（精确） | `^0.2.1-rc.2`（= `>=0.2.1-rc.2 <0.3.0`） |
+| `@deepseek-ai/cordis` | `4.0.5`（精确） | `^4.0.5`（0.2.2-rc.1 实际带的是 4.1.0） |
+
+实测：DSH `0.2.1-rc.2` 与 `0.2.2-rc.1` 都满足该范围，不需要 `allow-version` 豁免。
+插件本身只用 `webServer` / `connection` 这类稳定接口，升级到 0.3.x 前若接口有变，
+这里会再调整。
+
 ## 安装
 
 本仓库：<https://github.com/yuweitk/dsh-lan-proxy>
